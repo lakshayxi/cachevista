@@ -1,7 +1,9 @@
 import json
-import os
 import urllib.request
+import zipfile
 from pathlib import Path
+
+from cachevista.config import load
 
 
 def download_coco_subset(out_dir: Path, n=500):
@@ -14,7 +16,6 @@ def download_coco_subset(out_dir: Path, n=500):
             "http://images.cocodataset.org/annotations/annotations_trainval2017.zip",
             out_dir / "annotations.zip"
         )
-        import zipfile
         with zipfile.ZipFile(out_dir / "annotations.zip") as z:
             z.extract("annotations/instances_val2017.json", out_dir)
         (out_dir / "annotations/instances_val2017.json").rename(ann_path)
@@ -44,4 +45,6 @@ def download_coco_subset(out_dir: Path, n=500):
 
 
 if __name__ == "__main__":
-    download_coco_subset(Path("data/coco"), n=500)
+    cfg = load()
+    coco_dir = Path(cfg["data"]["coco_dir"]).parent
+    download_coco_subset(coco_dir, n=500)
