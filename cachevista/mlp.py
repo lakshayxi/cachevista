@@ -5,10 +5,10 @@ from torch.utils.data import DataLoader, TensorDataset
 
 
 class DriftMLP(nn.Module):
-    def __init__(self, input_dim=1536):
+    def __init__(self):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 256),
+            nn.Linear(1536, 256),
             nn.ReLU(),
             nn.Dropout(0.3),
             nn.Linear(256, 64),
@@ -20,15 +20,21 @@ class DriftMLP(nn.Module):
     def forward(self, x):
         return self.net(x).squeeze(1)
 
-    def predict(self, emb_prev: np.ndarray, emb_curr: np.ndarray) -> float:
-        x = torch.tensor(np.concatenate([emb_prev, emb_curr]), dtype=torch.float32).unsqueeze(0)
+    def predict(self, emb_prev, emb_curr) -> float:
+        x = torch.tensor(
+            np.concatenate([emb_prev, emb_curr]),
+            dtype=torch.float32
+        ).unsqueeze(0)
         with torch.no_grad():
             return float(self.forward(x))
 
 
-def train_model(X: np.ndarray, y: np.ndarray, epochs=30, lr=1e-3) -> DriftMLP:
+def train_model(X, y, epochs=30, lr=1e-3):
     loader = DataLoader(
-        TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)),
+        TensorDataset(
+            torch.tensor(X, dtype=torch.float32),
+            torch.tensor(y, dtype=torch.float32),
+        ),
         batch_size=8,
         shuffle=True,
     )
@@ -52,11 +58,11 @@ def train_model(X: np.ndarray, y: np.ndarray, epochs=30, lr=1e-3) -> DriftMLP:
     return model
 
 
-def save_model(model: DriftMLP, path: str):
+def save_model(model, path):
     torch.save(model.state_dict(), path)
 
 
-def load_model(path: str) -> DriftMLP:
+def load_model(path) -> DriftMLP:
     model = DriftMLP()
     model.load_state_dict(torch.load(path, weights_only=True))
     model.eval()
