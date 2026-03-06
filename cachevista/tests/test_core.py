@@ -18,4 +18,4 @@ def test_cachevista_hit_rate():
     cv = CacheVista()
     generate_with_strategy(cv, emb)
     generate_with_strategy(cv, emb)
-    assert cv.cache_hit_rate() == 0.5
+    assert cv.hit_rate() == 0.5
