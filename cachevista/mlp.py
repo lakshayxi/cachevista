@@ -29,7 +29,11 @@ class DriftMLP(nn.Module):
             return float(self.forward(x))
 
 
-def train_model(X, y, epochs=30, lr=1e-3):
+def train_model(X, y, epochs=30, lr=1e-3, use_wandb=False):
+    if use_wandb:
+        import wandb
+        wandb.init(project="cachevista", config={"epochs": epochs, "lr": lr})
+
     loader = DataLoader(
         TensorDataset(
             torch.tensor(X, dtype=torch.float32),
@@ -51,8 +55,17 @@ def train_model(X, y, epochs=30, lr=1e-3):
             loss.backward()
             opt.step()
             epoch_loss += loss.item()
+
+        avg_loss = epoch_loss / len(loader)
         if (epoch + 1) % 10 == 0:
-            print(f"epoch {epoch+1}/{epochs}  loss={epoch_loss/len(loader):.4f}")
+            print(f"epoch {epoch+1}/{epochs}  loss={avg_loss:.4f}")
+        if use_wandb:
+            import wandb
+            wandb.log({"epoch": epoch + 1, "loss": avg_loss})
+
+    if use_wandb:
+        import wandb
+        wandb.finish()
 
     model.eval()
     return model
