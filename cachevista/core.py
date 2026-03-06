@@ -28,15 +28,27 @@ class NoCacheStrategy(BaseCacheStrategy):
 class StaticCacheStrategy(BaseCacheStrategy):
     def __init__(self):
         self._store = {}
+        self.hits = 0
+        self.misses = 0
 
     def retrieve(self, embedding):
-        return self._store.get(_md5(embedding))
+        cached = self._store.get(_md5(embedding))
+        if cached is not None:
+            self.hits += 1
+        else:
+            self.misses += 1
+        return cached
 
     def store(self, embedding):
         self._store[_md5(embedding)] = embedding
 
     def clear(self):
         self._store.clear()
+        self.hits = self.misses = 0
+
+    def stats(self):
+        total = self.hits + self.misses
+        return {"hit_rate": self.hits / total if total > 0 else 0.0}
 
 
 class CacheVista(BaseCacheStrategy):

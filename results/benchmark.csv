@@ -1,0 +1,4 @@
+strategy,hit_rate,avg_latency_ms,total_latency_ms,energy_kg_co2,latency_saved_ms
+no_cache,0.0,0.0005,0.07,1e-08,0.0
+static_cache,0.1921,0.0174,2.63,3e-08,9.605
+cachevista,0.2318,0.0827,12.48,1.1e-07,11.59
