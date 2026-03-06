@@ -12,3 +12,4 @@ seaborn
 matplotlib
 tqdm
 ruff
+scikit-learn
