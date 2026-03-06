@@ -1,0 +1,14 @@
+torch
+torchvision
+transformers
+faiss-cpu
+numpy<2
+Pillow
+wandb
+codecarbon
+pytest
+pytest-cov
+seaborn
+matplotlib
+tqdm
+ruff

@@ -1,0 +1,29 @@
+# data and models — too large for git
+data/
+models/
+!data/README.md
+!models/model_card.md
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# env
+.env
+*.env
+
+# jupyter
+.ipynb_checkpoints/
+
+# macos
+.DS_Store
+
+# experiment outputs
+results/
+figures/
+*.log
+wandb/
