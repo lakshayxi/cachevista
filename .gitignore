@@ -27,3 +27,8 @@ results/
 figures/
 *.log
 wandb/
+
+# keep docs inside ignored dirs
+!data/README.md
+!models/model_card.md
+.pytest_cache/
