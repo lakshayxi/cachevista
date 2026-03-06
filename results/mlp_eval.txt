@@ -1,0 +1,10 @@
+test accuracy: 0.7800
+              precision    recall  f1-score   support
+
+    no-drift       0.70      0.89      0.79        91
+       drift       0.88      0.69      0.77       109
+
+    accuracy                           0.78       200
+   macro avg       0.79      0.79      0.78       200
+weighted avg       0.80      0.78      0.78       200
+
