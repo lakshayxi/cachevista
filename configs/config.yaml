@@ -11,8 +11,9 @@ model:
   mlp_path: models/drift_mlp_coco.pt
 
 cache:
-  similarity_threshold: 0.90
+  similarity_threshold: 0.93
   drift_threshold: 0.50
+  ablation_threshold: 0.93
 
 training:
   epochs: 50
