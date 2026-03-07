@@ -8,6 +8,8 @@ from PIL import Image
 from sentence_transformers import SentenceTransformer
 from transformers import CLIPImageProcessor, CLIPVisionModelWithProjection
 
+from cachevista.utils import get_device
+
 logger = logging.getLogger(__name__)
 
 _instances: dict[str, "CLIPEncoder"] = {}
@@ -38,21 +40,14 @@ def get_sentence_encoder() -> SentenceTransformer:
     return _sent_model
 
 
-def get_device() -> torch.device:
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
-    elif torch.cuda.is_available():
-        return torch.device("cuda")
-    return torch.device("cpu")
-
-
 class CLIPEncoder:
     """
     Vision-only CLIP encoder with joint (image, question) embedding support.
 
     encode(image) -> 768-dim unit-norm image embedding
     encode_joint(image, question) -> 1152-dim unit-norm joint embedding
-        = L2_norm(concat(clip_image_emb(768), sentence_emb(384)))
+        = L2_norm( concat( clip_image_emb(768), sentence_emb(384) ) )
+        i.e. concat first, then normalize — NOT normalize-each-then-concat
 
     Joint embedding design note: both component vectors are unit-norm before
     concatenation. After concat, re-normalizing divides by sqrt(2) (a constant
@@ -156,13 +151,21 @@ class CLIPEncoder:
         emb = features[0].float().cpu().numpy().astype(np.float32)
         return self._normalize(emb)
 
-    def encode_joint(self, image: Image.Image, question: str) -> np.ndarray:
+    def encode_joint(
+        self, image: Image.Image, question: str, text_weight: float = 1.0
+    ) -> np.ndarray:
         """
         Joint (image, question) embedding.
+
         Concatenates unit-norm CLIP image emb with unit-norm sentence emb, then
-        re-normalizes. The re-normalization divides by sqrt(2) since both inputs
-        are unit vectors — it's a constant scale, not adaptive weighting.
-        See class docstring for the image-dominance implication.
+        re-normalizes. Without weighting, the image component (768-dim) contributes
+        ~66.7% of raw magnitude vs ~33.3% for text (384-dim), so cosine similarity
+        in FAISS is biased toward image similarity over question similarity.
+
+        text_weight scales the sentence emb before concat to counteract this.
+        text_weight=2.0 equalizes the per-component magnitude contribution
+        (768 * 1.0 vs 384 * 2.0). Default is 1.0 (original behavior, image-dominant).
+        Ablate this if cache precision on same-image/different-question pairs is poor.
         """
         img_emb = self.encode(image)
         sent_emb = get_sentence_encoder().encode(
@@ -172,7 +175,7 @@ class CLIPEncoder:
             show_progress_bar=False,
         ).astype(np.float32)
 
-        joint = np.concatenate([img_emb, sent_emb])
+        joint = np.concatenate([img_emb, sent_emb * text_weight])
         return self._normalize(joint)
 
     def encode_batch(self, images: list[Image.Image], chunk_size: int = 32) -> np.ndarray:
@@ -195,11 +198,12 @@ class CLIPEncoder:
         return np.concatenate(results, axis=0)
 
     def encode_joint_batch(
-        self, images: list[Image.Image], questions: list[str]
+        self, images: list[Image.Image], questions: list[str], text_weight: float = 1.0
     ) -> np.ndarray:
         """
         Joint batch encoding for (image, question) pairs.
         Returns (N, joint_dim) normalized array.
+        See encode_joint for text_weight documentation.
         """
         if len(images) != len(questions):
             raise ValueError(
@@ -216,5 +220,5 @@ class CLIPEncoder:
             show_progress_bar=False,
         ).astype(np.float32)
 
-        joints = np.concatenate([img_embs, sent_embs], axis=1)
+        joints = np.concatenate([img_embs, sent_embs * text_weight], axis=1)
         return self._normalize_batch(joints)
