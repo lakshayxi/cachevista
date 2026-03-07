@@ -1,7 +1,6 @@
 import csv
 import matplotlib.pyplot as plt
 from pathlib import Path
-
 from cachevista.config import load
 
 cfg = load()
@@ -14,8 +13,7 @@ with open(results_dir / "benchmark.csv") as f:
 
 strategies = [r["strategy"] for r in rows]
 hit_rates = [float(r["hit_rate"]) * 100 for r in rows]
-latency_saved = [float(r["latency_saved_ms"]) for r in rows]
-
+avg_latencies = [float(r["avg_latency_ms"]) for r in rows]
 colors = ["#94A3B8", "#60A5FA", "#1F3A8A"]
 
 
@@ -25,15 +23,13 @@ def bar_chart(values, ylabel, title, filename, unit=""):
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.spines[["top", "right"]].set_visible(False)
+    max_val = max(values) if max(values) > 0 else 1
     for bar, val in zip(bars, values):
-        label = f"{val:.2f}{unit}"
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + max(values) * 0.01,
-            label,
-            ha="center",
-            va="bottom",
-            fontsize=10,
+            bar.get_height() + max_val * 0.01,
+            f"{val:.2f}{unit}",
+            ha="center", va="bottom", fontsize=10,
         )
     plt.tight_layout()
     plt.savefig(figures_dir / filename, dpi=150)
@@ -42,10 +38,4 @@ def bar_chart(values, ylabel, title, filename, unit=""):
 
 
 bar_chart(hit_rates, "Hit Rate (%)", "Cache Hit Rate by Strategy", "hit_rate.png", "%")
-bar_chart(
-    latency_saved,
-    "Latency Saved (ms)",
-    "Avg Latency Saved per Query (CLIP encode cost avoided)",
-    "latency.png",
-    "ms",
-)
+bar_chart(avg_latencies, "Avg Latency (ms)", "Average Latency per Query", "latency.png", "ms")

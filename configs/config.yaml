@@ -3,14 +3,11 @@ data:
   test_images:
     cat: data/test_cat.jpg
     dog: data/test_dog.jpg
-  drift_train_X: data/drift_X_coco.npy
-  drift_train_y: data/drift_y_coco.npy
-  drift_test_X: data/drift_X_test.npy
-  drift_test_y: data/drift_y_test.npy
+  drift_data_dir: data/drift
+  drift_data_path: data/drift/X_train.npy
 
 model:
   clip: openai/clip-vit-large-patch14
-  embedding_dim: 768
   mlp_path: models/drift_mlp_coco.pt
 
 cache:
@@ -18,11 +15,10 @@ cache:
   drift_threshold: 0.50
 
 training:
-  epochs: 30
+  epochs: 50
   lr: 0.001
-  batch_size: 8
-  dropout: 0.3
-  test_split: 0.20
+  batch_size: 64
+  dropout: 0.2
 
 benchmark:
   results_dir: results
